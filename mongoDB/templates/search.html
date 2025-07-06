@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Profiles - Happy Marriage Bureau</title>
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }}</h2>
+
+    <h3>Search Profiles</h3>
+    <form method="POST" onsubmit="saveFilters()">
+        <label for="logic">Combine Conditions With:</label>
+        <select name="logic" id="logic">
+            <option value="and" {% if form_data.get('logic') == 'and' %}selected{% endif %}>AND</option>
+            <option value="or" {% if form_data.get('logic') == 'or' %}selected{% endif %}>OR</option>
+        </select>
+        <br><br>
+
+        {% for i in range(5) %}
+            <div>
+                <select name="column{{ i }}">
+                    <option value="">-- Select Column --</option>
+                    {% for col in all_columns %}
+                        <option value="{{ col }}" {% if form_data.get('column' ~ i) == col %}selected{% endif %}>{{ col }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="operator{{ i }}">
+                    {% set selected_op = form_data.get('operator' ~ i, '') %}
+                    {% for op in ['==', '!=', '>', '<', '>=', '<=', 'contains'] %}
+                        <option value="{{ op }}" {% if selected_op == op %}selected{% endif %}>{{ op }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="text" name="value{{ i }}" placeholder="Enter value"
+                       value="{{ form_data.get('value' ~ i, '') }}">
+            </div>
+            <br>
+        {% endfor %}
+
+        <input type="submit" value="Search">
+        <input type="reset" value="Clear Filters" onclick="clearFilters()">
+        <a href="{{ url_for('upload') }}" class="btn">Upload New Profile</a>
+    </form>
+
+    <br>
+
+    {% if results %}
+        <h3>Search Results</h3>
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    {% for col in columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                    <th>Image</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                    <tr>
+                        {% for col in columns %}
+                            <td>{{ row.get(col, '') }}</td>
+                        {% endfor %}
+
+                        {% if row.get("image_id") %}
+                            <td>
+                                <img src="{{ url_for('get_image', image_id=row.image_id) }}" width="100"><br>
+                                <a href="{{ url_for('delete_image', doc_id=row.id) }}"
+                                   onclick="return confirm('Are you sure you want to delete this image?')">
+                                    🗑️ Delete Image
+                                </a>
+                            </td>
+                        {% else %}
+                            <td>No image</td>
+                        {% endif %}
+
+                        <td>
+                            <a href="{{ url_for('edit', doc_id=row['id']) }}">Edit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif results is not none %}
+        <p>No matching records found.</p>
+    {% endif %}
+
+    <script>
+        const totalFilters = 5;
+
+        window.onload = function () {
+            for (let i = 0; i < totalFilters; i++) {
+                const col = localStorage.getItem("column" + i);
+                const op = localStorage.getItem("operator" + i);
+                const val = localStorage.getItem("value" + i);
+
+                if (col) document.querySelector(`[name="column${i}"]`).value = col;
+                if (op)  document.querySelector(`[name="operator${i}"]`).value = op;
+                if (val) document.querySelector(`[name="value${i}"]`).value = val;
+            }
+
+            const logic = localStorage.getItem("logic");
+            if (logic) document.querySelector('[name="logic"]').value = logic;
+        };
+
+        function saveFilters() {
+            for (let i = 0; i < totalFilters; i++) {
+                localStorage.setItem("column" + i, document.querySelector(`[name="column${i}"]`)?.value || '');
+                localStorage.setItem("operator" + i, document.querySelector(`[name="operator${i}"]`)?.value || '');
+                localStorage.setItem("value" + i, document.querySelector(`[name="value${i}"]`)?.value || '');
+            }
+
+            localStorage.setItem("logic", document.querySelector('[name="logic"]')?.value || 'and');
+        }
+
+        function clearFilters() {
+            for (let i = 0; i < totalFilters; i++) {
+                localStorage.removeItem("column" + i);
+                localStorage.removeItem("operator" + i);
+                localStorage.removeItem("value" + i);
+            }
+            localStorage.removeItem("logic");
+        }
+    </script>
+</body>
+</html>

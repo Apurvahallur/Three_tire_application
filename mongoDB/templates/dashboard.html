@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Dashboard</title>
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }}!</h2>
+
+    <ul>
+        <li><a href="{{ url_for('search') }}">🔍 Search Profiles</a></li>
+        <li><a href="{{ url_for('upload') }}">⬆️ Upload New Profile</a></li>
+    </ul>
+</body>
+</html>
